@@ -10,8 +10,6 @@ import numpy as np
 import pandas as pd
 from dash.dependencies import ClientsideFunction, Input, Output
 
-import utils.helpers as hp
-import utils.models as md
 
 app = dash.Dash(
     __name__,
