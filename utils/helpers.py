@@ -8,12 +8,17 @@ from dash.dependencies import ClientsideFunction, Input, Output
 
 
 def _add_markers(figure_data, molecules, plot_type="scatter3d"):
-    """
-    Add markers on the plot graph.
-    :params figure_data: the graph data
-    :params molecules: list of selected molecules
-    :params plot_type: plot type (scatter3d, histogram2d, scatter)
-    :returns: plotly graph trace list
+    """Add markers on the plot graph
+    
+    Arguments:
+        figure_data {[type]} -- the graph data
+        molecules {[type]} -- list of selected molecules
+    
+    Keyword Arguments:
+        plot_type {str} -- plot type (scatter3d, histogram2d, scatter) (default: {"scatter3d"})
+    
+    Returns:
+        [list] -- plotly graph trace list
     """
 
     drug_data = figure_data[0]
@@ -47,12 +52,17 @@ def _add_markers(figure_data, molecules, plot_type="scatter3d"):
 
 
 def _create_axis(axis_type, variation="Linear", title=None):
-    """
-    Creates a 2d or 3d axis.
-    :params axis_type: 2d or 3d axis
-    :params variation: axis type (log, line, linear, etc)
-    :parmas title: axis title
-    :returns: plotly axis dictionnary
+    """Creates a 2d or 3d axis.
+    
+    Arguments:
+        axis_type {[type]} -- 2d or 3d axis
+    
+    Keyword Arguments:
+        variation {str} -- axis type (log, line, linear, etc)
+        title {[type]} -- axis title
+    
+    Returns:
+        [dict] -- plotly axis dictionnary
     """
 
     if axis_type not in ["3d", "2d"]:
@@ -163,6 +173,24 @@ def create_plot(
         plot_type="scatter3d",
         markers=[],
 ):
+    """Generate a plot
+    
+    Arguments:
+        x {Array} -- x array in the plot
+        y {Array} -- y array in the plot
+        z {Array} -- z array in the plot
+        color {Array} -- a value to set each color
+    
+    Keyword Arguments:
+        xlabel {str} -- Label for the x axis (default: {"LogP"})
+        ylabel {str} -- Label for the y axis (default: {"pkA"})
+        zlabel {str} -- Label for the z axis (default: {"Solubility (mg/ml)"})
+        plot_type {str} -- histogram2d, scatter or scatter3d (default: {"scatter3d"})
+        markers {list} -- markers (default: {[]})
+    
+    Returns:
+        data & plot's layout
+    """
 
     colorscale = [
         [0, "rgb(244,236,21)"],

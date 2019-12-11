@@ -37,19 +37,32 @@ desc.insert(0, "Gender", gender)
 
 risk = pd.read_csv(DATA_PATH.joinpath("risk.csv"))
 
-FIGURE = create_plot(x=tsne.iloc[:, 0],
-                     y=tsne.iloc[:, 1],
-                     z=tsne.iloc[:, 2],
-                     color=tsne.iloc[:, 3],
-                     xlabel="dimension 1",
-                     ylabel="dimension 2",
-                     zlabel="dimension 3")
+# Create Figures
+TSNE_FIG = create_plot(x=tsne.iloc[:, 0],
+                       y=tsne.iloc[:, 1],
+                       z=tsne.iloc[:, 2],
+                       color=tsne.iloc[:, 3],
+                       xlabel="dimension 1",
+                       ylabel="dimension 2",
+                       zlabel="dimension 3")
+
+SCATTER_FIG = create_plot(x=dataset.sysBP,
+                          y=dataset.prevalentHyp,
+                          z=dataset.BPMeds,
+                          plot_type="scatter3d",
+                          color=risk.risk,
+                          xlabel="Systolic Pressure",
+                          ylabel="Prevalent Hypertension",
+                          zlabel="Blood Pressure Medication")
 
 
 def description_card():
+    """ Generate a description card
+    
+    Returns:
+        Nothing
     """
-    :return: A Div containing dashboard title & descriptions.
-    """
+
     return html.Div(
         id="description-card",
         children=[
@@ -162,14 +175,33 @@ app.layout = html.Div(
                         "Colouring obtained by Self-Organizing Map (SOM). 0 is safe; 1 is at risk.",
                         html.Br(),
                         dcc.Graph(
-                            id="clickable-graph",
+                            id="tsne_graph",
                             hoverData={"points": [{
                                 "pointNumber": 0
                             }]},
-                            figure=FIGURE,
+                            figure=TSNE_FIG,
                         ),
                     ],
                 ),
+
+                # Predictors
+                html.Div(
+                    id="predictors_interactive_card",
+                    children=[
+                        html.B("Predictors"),
+                        html.Hr(),
+                        "Most important features in CHD prediction.",
+                        html.Br(),
+                        dcc.Graph(
+                            id="predictors_graph",
+                            hoverData={"points": [{
+                                "pointNumber": 0
+                            }]},
+                            figure=SCATTER_FIG,
+                        ),
+                    ],
+                ),
+
                 # Patient Wait time by Department
                 html.Div(
                     id="patients_card",

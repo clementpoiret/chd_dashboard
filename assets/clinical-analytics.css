@@ -85,14 +85,14 @@ H5, H3 {
     font-weight: bold;
 }
 
-#data_description_card, #tsne_interactive_card, #patients_card {
+#data_description_card, #tsne_interactive_card, #predictors_interactive_card, #patients_card {
     background-color: #FFFFFF;
     padding: 1rem;
     margin: auto;
     margin-top: 20px;
 }
 
-#data_description_card > b, #tsne_interactive_card > b, #patients_card > b {
+#data_description_card > b, #tsne_interactive_card > b, #predictors_interactive_card > b, #patients_card > b {
     line-height: 2.5;
 }
 
@@ -183,7 +183,7 @@ H5, H3 {
         clear: both;
     }
 
-    #data_description_card > b, #tsne_interactive_card > b, #patients_card > b {
+    #data_description_card > b, #tsne_interactive_card > b, #predictors_interactive_card > b, #patients_card > b {
         line-height: 2.5;
         font-size: 13px;
         display: block;
