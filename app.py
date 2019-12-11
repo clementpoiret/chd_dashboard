@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 from dash.dependencies import ClientsideFunction, Input, Output
 
+from utils.helpers import create_plot
 
 app = dash.Dash(
     __name__,
@@ -34,200 +35,16 @@ desc = dataset.iloc[:, :-1].groupby(["male"]).mean()
 gender = pd.DataFrame(["Female", "Male"])
 desc.insert(0, "Gender", gender)
 
-def _add_markers(figure_data, molecules, plot_type="scatter3d"):
-    """
-    Add markers on the plot graph.
-    :params figure_data: the graph data
-    :params molecules: list of selected molecules
-    :params plot_type: plot type (scatter3d, histogram2d, scatter)
-    :returns: plotly graph trace list
-    """
+risk = pd.read_csv(DATA_PATH.joinpath("risk.csv"))
 
-    drug_data = figure_data[0]
-    list_of_drugs = drug_data["text"]
+FIGURE = create_plot(x=tsne.iloc[:, 0],
+                     y=tsne.iloc[:, 1],
+                     z=tsne.iloc[:, 2],
+                     color=tsne.iloc[:, 3],
+                     xlabel="dimension 1",
+                     ylabel="dimension 2",
+                     zlabel="dimension 3")
 
-    # get the axis index for each drug
-    indices = [index for index, value in enumerate(list_of_drugs) if value in molecules]
-
-    if plot_type == "histogram2d":
-        plot_type = "scatter"
-
-    traces = []
-    for point_number in indices:
-        trace = {
-            "x": [drug_data["x"][point_number]],
-            "y": [drug_data["y"][point_number]],
-            "marker": {"color": "red", "size": 16, "opacity": 0.6, "symbol": "cross"},
-            "type": plot_type,
-        }
-        if plot_type == "scatter3d":
-            trace["z"] = [drug_data["z"][point_number]]
-        traces.append(trace)
-    return traces
-
-
-def _create_axis(axis_type, variation="Linear", title=None):
-    """
-    Creates a 2d or 3d axis.
-    :params axis_type: 2d or 3d axis
-    :params variation: axis type (log, line, linear, etc)
-    :parmas title: axis title
-    :returns: plotly axis dictionnary
-    """
-
-    if axis_type not in ["3d", "2d"]:
-        return None
-
-    default_style = {
-        "background": "rgb(230, 230, 230)",
-        "gridcolor": "rgb(255, 255, 255)",
-        "zerolinecolor": "rgb(255, 255, 255)",
-    }
-
-    if axis_type == "3d":
-        return {
-            "showbackground": True,
-            "backgroundcolor": default_style["background"],
-            "gridcolor": default_style["gridcolor"],
-            "title": title,
-            "type": variation,
-            "zerolinecolor": default_style["zerolinecolor"],
-        }
-
-    if axis_type == "2d":
-        return {
-            "xgap": 10,
-            "ygap": 10,
-            "backgroundcolor": default_style["background"],
-            "gridcolor": default_style["gridcolor"],
-            "title": title,
-            "zerolinecolor": default_style["zerolinecolor"],
-            "color": "#444",
-        }
-
-
-def _black_out_axis(axis):
-    axis["showgrid"] = False
-    axis["zeroline"] = False
-    axis["color"] = "white"
-    return axis
-
-
-def _create_layout(layout_type, xlabel, ylabel):
-    """ Return dash plot layout. """
-
-    base_layout = {
-        "font": {"family": "Raleway"},
-        "hovermode": "closest",
-        "margin": {"r": 20, "t": 0, "l": 0, "b": 0},
-        "showlegend": False,
-    }
-
-    if layout_type == "scatter3d":
-        base_layout["scene"] = {
-            "xaxis": _create_axis(axis_type="3d", title=xlabel),
-            "yaxis": _create_axis(axis_type="3d", title=ylabel),
-            "zaxis": _create_axis(axis_type="3d", title=xlabel, variation="log"),
-            "camera": {
-                "up": {"x": 0, "y": 0, "z": 1},
-                "center": {"x": 0, "y": 0, "z": 0},
-                "eye": {"x": 0.08, "y": 2.2, "z": 0.08},
-            },
-        }
-
-    elif layout_type == "histogram2d":
-        base_layout["xaxis"] = _black_out_axis(
-            _create_axis(axis_type="2d", title=xlabel)
-        )
-        base_layout["yaxis"] = _black_out_axis(
-            _create_axis(axis_type="2d", title=ylabel)
-        )
-        base_layout["plot_bgcolor"] = "black"
-        base_layout["paper_bgcolor"] = "black"
-        base_layout["font"]["color"] = "white"
-
-    elif layout_type == "scatter":
-        base_layout["xaxis"] = _create_axis(axis_type="2d", title=xlabel)
-        base_layout["yaxis"] = _create_axis(axis_type="2d", title=ylabel)
-        base_layout["plot_bgcolor"] = "rgb(230, 230, 230)"
-        base_layout["paper_bgcolor"] = "rgb(230, 230, 230)"
-
-    return base_layout
-
-
-def create_plot(
-    x,
-    y,
-    z,
-    color,
-    xlabel="LogP",
-    ylabel="pkA",
-    zlabel="Solubility (mg/ml)",
-    plot_type="scatter3d",
-    markers=[],
-):
-
-    colorscale = [
-        [0, "rgb(244,236,21)"],
-        [0.3, "rgb(249,210,41)"],
-        [0.4, "rgb(134,191,118)"],
-        [0.5, "rgb(37,180,167)"],
-        [0.65, "rgb(17,123,215)"],
-        [1, "rgb(54,50,153)"],
-    ]
-
-    data = [
-        {
-            "x": x,
-            "y": y,
-            "z": z,
-            "mode": "markers",
-            "marker": {
-                "colorscale": colorscale,
-                "colorbar": {"title": "Molecular<br>Weight"},
-                "line": {"color": "#444"},
-                "reversescale": True,
-                "sizeref": 45,
-                "sizemode": "diameter",
-                "opacity": 0.7,
-                "color": color,
-            },
-            "type": plot_type,
-        }
-    ]
-
-    if plot_type in ["histogram2d", "scatter"]:
-        del data[0]["z"]
-
-    if plot_type == "histogram2d":
-        # Scatter plot overlay on 2d Histogram
-        data[0]["type"] = "scatter"
-        data.append(
-            {
-                "x": x,
-                "y": y,
-                "type": "histogram2d",
-                "colorscale": "Greys",
-                "showscale": False,
-            }
-        )
-
-    layout = _create_layout(plot_type, xlabel, ylabel)
-
-    if len(markers) > 0:
-        data = data + _add_markers(data, markers, plot_type=plot_type)
-
-    return {"data": data, "layout": layout}
-
-FIGURE = create_plot(
-    x=tsne.iloc[:,0],
-    y=tsne.iloc[:,1],
-    z=tsne.iloc[:,2],
-    color=tsne.iloc[:,3],
-    xlabel="dimension 1",
-    ylabel="dimension 2",
-    zlabel="dimension 3"
-)
 
 def description_card():
     """
@@ -241,13 +58,43 @@ def description_card():
             html.Div(
                 id="intro",
                 children=[
-                    """Original authors focused on a classical approach: a logistic regression to determine if patients were at 
-                risk to develop CHD diseases in a 10-year time frame. My approach is different to meet course's specifications: 
-                using DataViz to answer a personal problematic. My approach is using unsupervised machine learning to detect individuals
-                with a high risk of CHD through t-distributed stochastic neighbor embedding (t-SNE), density-based spatial clustering 
-                of applications with noise (DBSCAN) and self-organizing maps (SOM).""",
-                    html.Br(),
-                    "Provided under GNU Affero GPL by Clément POIRET (Université de Rouen)."
+                    dcc.Markdown("""
+                    
+                    The dataset is publically available on the Kaggle website, and is
+                    from an ongoing cardiovascular study on residents of the town of Framingham,
+                    Massachusetts. The classification goal is to predict whether the patient
+                    has 10-year risk of future coronary heart disease (CHD).The dataset provides
+                    the patients’ information. It includes over 4,000 records and 15 attributes.
+                    Variables Each attribute is a potential risk factor. There are both
+                    demographic, behavioral and medical risk factors.
+
+                    [The original dataset can be found here.](https://www.kaggle.com/dileep070/heart-disease-prediction-using-logistic-regression)
+
+                    Original authors focused on a classical approach: a logistic regression to
+                    determine if patients were at risk to develop CHD diseases in a 10-year
+                    time frame. My approach is different to meet course"s specifications:
+                    using *DataViz* to answer a personal problematic.
+                    My approach is using unsupervised machine learning to detect individuals
+                    with a high risk of CHD through *t-distributed stochastic neighbor embedding*
+                    (t-SNE), *density-based spatial clustering of applications with noise* (DBSCAN)
+                    and *self-organizing maps* (SOM).
+
+                    Copyright (C) 2019 POIRET Clément.
+
+                    This program is free software: you can redistribute it and/or modify
+                    it under the terms of the GNU Affero General Public License as published
+                    by the Free Software Foundation, either version 3 of the License, or
+                    (at your option) any later version.
+
+                    This program is distributed in the hope that it will be useful,
+                    but WITHOUT ANY WARRANTY; without even the implied warranty of
+                    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+                    GNU Affero General Public License for more details.
+
+                    You should have received a copy of the GNU Affero General Public License
+                    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+                    """)
                 ],
             ),
         ],
@@ -296,8 +143,13 @@ app.layout = html.Div(
                                 "id": i
                             } for i in desc.columns],
                             data=desc.to_dict("records"),
-                            style_table={'overflowX': 'scroll'}
-                        ),
+                            style_table={"overflowX": "scroll"},
+                            style_as_list_view=True,
+                            style_cell={"padding": "5px"},
+                            style_header={
+                                "backgroundColor": "white",
+                                "fontWeight": "bold"
+                            }),
                     ],
                 ),
 
@@ -307,20 +159,64 @@ app.layout = html.Div(
                     children=[
                         html.B("t-distributed Stochastic Neighbor Embedding"),
                         html.Hr(),
+                        "Colouring obtained by Self-Organizing Map (SOM). 0 is safe; 1 is at risk.",
+                        html.Br(),
                         dcc.Graph(
                             id="clickable-graph",
-                            hoverData={"points": [{"pointNumber": 0}]},
+                            hoverData={"points": [{
+                                "pointNumber": 0
+                            }]},
                             figure=FIGURE,
                         ),
                     ],
                 ),
                 # Patient Wait time by Department
                 html.Div(
-                    id="wait_time_card",
+                    id="patients_card",
                     children=[
-                        html.B("Patient Wait Time and Satisfactory Scores"),
+                        html.B("Searching a Patient"),
                         html.Hr(),
-                        html.Div(id="wait_time_table", children="TABLE"),
+                        "Here, you can search a patient from its UID, and see if he presents a risk.",
+                        html.Div(
+                            id="patients_table_div",
+                            children=[
+                                dash_table.DataTable(
+                                    id="patients_table",
+                                    columns=[{
+                                        "name": i,
+                                        "id": i
+                                    } for i in risk.columns],
+                                    data=risk.to_dict("records"),
+                                    sort_action="native",
+                                    sort_mode="multi",
+                                    selected_columns=[],
+                                    selected_rows=[],
+                                    page_action="native",
+                                    page_current=0,
+                                    page_size=10,
+                                    style_table={
+                                        "overflowX": "scroll",
+                                        "maxHeight": "300px",
+                                        "overflowY": "scroll"
+                                    },
+                                    style_as_list_view=True,
+                                    style_cell={"padding": "5px"},
+                                    style_header={
+                                        "backgroundColor": "white",
+                                        "fontWeight": "bold"
+                                    },
+                                    style_data_conditional=[
+                                        {
+                                            "if": {
+                                                "column_id": "UID",
+                                                "filter_query": "{risk} eq 1"
+                                            },
+                                            "backgroundColor": "#DE1738",
+                                            "color": "white",
+                                        },
+                                    ]),
+                            ]),
+                        html.Div(id="patients_table_container")
                     ],
                 ),
             ],
