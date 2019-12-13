@@ -209,7 +209,7 @@ def create_plot(
         "marker": {
             "colorscale": colorscale,
             "colorbar": {
-                "title": "Molecular<br>Weight"
+                "title": "Risk<br>Category"
             },
             "line": {
                 "color": "#444"
